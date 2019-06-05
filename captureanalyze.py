@@ -6,12 +6,14 @@ from image_checker import checkSimilarPictures
 import argparse
 import logging
 from datetime import datetime
+import re
 
 #Argumentos default
 _D_PATHAPKS = '/home/juniorrek/benchmark/TippyTipperMutantsAPKs/'
 _D_ORIGINAL = 'TippyTipper-debug0.apk'
 _D_PACKAGE = 'net.mandaria.tippytipper'
 _D_CNAME = 'TippyTipper'
+_D_LOGPATH = '/home/juniorrek/benchmark/net.mandaria.tippytipper-mutants.log'
 
 #Preparar os argumentos
 ap = argparse.ArgumentParser()
@@ -19,6 +21,7 @@ ap.add_argument("-p", "--pathapks", default=_D_PATHAPKS, help="Pasta com os apks
 ap.add_argument("-o", "--original", default=_D_ORIGINAL, help="Nome do apk original")
 ap.add_argument("-pk", "--package", default=_D_PACKAGE, help="Package do androidmanifest")
 ap.add_argument("-cn", "--cname", default=_D_CNAME, help="Nome em comum dos apks mutantes")
+ap.add_argument("-lp", "--logpath", default=_D_LOGPATH, help="Path do log dos operadores dos mutantes gerado pelo MDroidPlus")
 args = vars(ap.parse_args())
 
 #Parametros screenshot
@@ -52,17 +55,39 @@ def captureScreen(pic_name, path):
     img.crop((0, STATUS_BAR_CROP_HEIGHT, w, h)).save(image_path)
     return image_path
 
+def operadorMutante(logpath, nmutante):
+    mutante = 'Mutant ' + nmutante;
+    
+    #Encontra linha
+    with open(logpath, 'r') as f:
+        while True:
+            linha = f.readline();
+            if not linha:
+                linha = 'Nao encontrado';
+                break;
+            elif mutante in linha:
+                linha = linha;
+                break;
+            
+    #Encontra o operador
+    if linha != 'Nao encontrado':
+        operador = re.search("(?<=; ).*(?= in)", linha)
+        return operador.group();
+    
+    return linha;
+
 def main():
     #le os apks da pasta
     basepath = args["pathapks"]
     original = args["original"]
     package = args["package"]
     cname = args["cname"]
+    logpath = args["logpath"]
     
     #configura log
     logging.basicConfig(filename=basepath+'log_analise.log', level=logging.INFO)
     logging.info('ANALISE INICIADA '+datetime.now().strftime('%d-%m-%Y %H:%M:%S'))
-    logging.info('Mutante original ' + original)
+    logging.info('Original: ' + original)
     
     #cria pasta screenshots
     if not os.path.exists(basepath + 'Screenshots/'):
@@ -83,11 +108,13 @@ def main():
             os.system('timeout 1h adb shell monkey --throttle 200 -p '+package+' -s 1000 -v 250 --ignore-crashes --ignore-timeouts --ignore-security-exceptions > monkey.log')
             captureScreen(mutante + '.png', basepath + 'Screenshots/')
             similar = analyze_results(basepath + 'Screenshots/', original + '.png', mutante + '.png')
+            nmutante = re.search("\d+(?=\.apk)", mutante)
+            operador = operadorMutante(logpath, nmutante.group())
             if similar:
-                logging.info('Mutante: ' + mutante + ";Situacao: VIVO")
+                logging.info('Mutante: ' + mutante + ";Situacao: VIVO" + ";Operador: " + operador)
                 print 'Imagens iguais'
             else:
-                logging.info('Mutante: ' + mutante + ";Situacao: MORTO")
+                logging.info('Mutante: ' + mutante + ";Situacao: MORTO" + ";Operador: " + operador)
                 print 'Imagens diferentes' 
             break;
 
