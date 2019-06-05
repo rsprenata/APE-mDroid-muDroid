@@ -101,6 +101,9 @@ def main():
     #eh necessario passar o package que esta localizado no arquivo Androidmanifest.xml:
     os.system('timeout 1h adb shell monkey --throttle 200 -p '+package+' -s 1000 -v 250 --ignore-crashes --ignore-timeouts --ignore-security-exceptions > monkey.log')
     captureScreen(original + '.png', basepath + 'Screenshots/')
+    
+    #variavel que guarda a quantidade de mortos e vivos por operador
+    grupo = {}
 
     for mutante in os.listdir(basepath):
         if mutante.startswith( cname ) and mutante != original:
@@ -110,13 +113,31 @@ def main():
             similar = analyze_results(basepath + 'Screenshots/', original + '.png', mutante + '.png')
             nmutante = re.search("\d+(?=\.apk)", mutante)
             operador = operadorMutante(logpath, nmutante.group())
+            
+            #se ainda nao comecou a contar operador
+            if operador not in grupo:
+                grupo[operador] = {}
+                grupo[operador]['vivo'] = 0
+                grupo[operador]['morto'] = 0
+            
             if similar:
                 logging.info('Mutante: ' + mutante + ";Situacao: VIVO" + ";Operador: " + operador)
                 print 'Imagens iguais'
+                grupo[operador]['vivo'] += 1
             else:
                 logging.info('Mutante: ' + mutante + ";Situacao: MORTO" + ";Operador: " + operador)
                 print 'Imagens diferentes' 
+                grupo[operador]['morto'] += 1
+                
             break;
+        
+    # log dos operadores vivos e mortos
+    total = 0
+    for k in grupo:
+        t = grupo[k]['vivo']+grupo[k]['morto']
+        total += t
+        logging.info('Operador: ' + k + ";VIVOS: " + str(grupo[k]['vivo']) + ";MORTOS: " + str(grupo[k]['morto']) + ";Total: " + str(t))
+    logging.info("TOTAL: " + str(total))
 
 if __name__ == '__main__':
     main()
