@@ -95,7 +95,8 @@ def main():
     
     #instala aplicativo no emulador,
     #passar endereco onde esta o apk (original ou mutante):
-    os.system('adb install -r ' + basepath + original)
+    os.system('adb uninstall ' + package)
+    os.system('adb install  ' + basepath + original)
 
     #executa monkey, ele cria caso de teste com a semente e executa no emulador, 
     #eh necessario passar o package que esta localizado no arquivo Androidmanifest.xml:
@@ -108,7 +109,8 @@ def main():
 
     for mutante in os.listdir(basepath):
         if mutante.startswith( cname ) and mutante != original:
-            os.system('adb install -r ' + basepath + mutante)
+            os.system('adb uninstall ' + package)
+            os.system('adb install ' + basepath + mutante)
             os.system('timeout 1h adb shell monkey --throttle 200 -p '+package+' -s 1000 -v 250 --ignore-crashes --ignore-timeouts --ignore-security-exceptions > monkey.log')
             sleep(1)
             captureScreen(mutante + '.png', basepath + 'Screenshots/')
