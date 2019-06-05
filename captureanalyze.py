@@ -4,6 +4,8 @@ from PIL import Image
 import subprocess
 from image_checker import checkSimilarPictures
 import argparse
+import logging
+from datetime import datetime
 
 #Argumentos default
 _D_PATHAPKS = '/home/juniorrek/benchmark/TippyTipperMutantsAPKs/'
@@ -57,6 +59,15 @@ def main():
     package = args["package"]
     cname = args["cname"]
     
+    #configura log
+    logging.basicConfig(filename=basepath+'log_analise.log', level=logging.INFO)
+    logging.info('ANALISE INICIADA '+datetime.now().strftime('%d-%m-%Y %H:%M:%S'))
+    logging.info('Mutante original ' + original)
+    
+    #cria pasta screenshots
+    if not os.path.exists(basepath + 'Screenshots/'):
+        os.makedirs(basepath + 'Screenshots/')
+    
     #instala aplicativo no emulador,
     #passar endereco onde esta o apk (original ou mutante):
     os.system('adb install -r ' + basepath + original)
@@ -64,8 +75,6 @@ def main():
     #executa monkey, ele cria caso de teste com a semente e executa no emulador, 
     #eh necessario passar o package que esta localizado no arquivo Androidmanifest.xml:
     os.system('timeout 1h adb shell monkey --throttle 200 -p '+package+' -s 1000 -v 250 --ignore-crashes --ignore-timeouts --ignore-security-exceptions > monkey.log')
-    
-    os.mkdir(basepath + 'Screenshots/')
     captureScreen(original + '.png', basepath + 'Screenshots/')
 
     for mutante in os.listdir(basepath):
@@ -75,8 +84,10 @@ def main():
             captureScreen(mutante + '.png', basepath + 'Screenshots/')
             similar = analyze_results(basepath + 'Screenshots/', original + '.png', mutante + '.png')
             if similar:
+                logging.info('Mutante: ' + mutante + ";Situacao: VIVO")
                 print 'Imagens iguais'
             else:
+                logging.info('Mutante: ' + mutante + ";Situacao: MORTO")
                 print 'Imagens diferentes' 
             break;
 
