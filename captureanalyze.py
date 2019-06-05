@@ -100,6 +100,7 @@ def main():
     #executa monkey, ele cria caso de teste com a semente e executa no emulador, 
     #eh necessario passar o package que esta localizado no arquivo Androidmanifest.xml:
     os.system('timeout 1h adb shell monkey --throttle 200 -p '+package+' -s 1000 -v 250 --ignore-crashes --ignore-timeouts --ignore-security-exceptions > monkey.log')
+    sleep(1)
     captureScreen(original + '.png', basepath + 'Screenshots/')
     
     #variavel que guarda a quantidade de mortos e vivos por operador
@@ -109,6 +110,7 @@ def main():
         if mutante.startswith( cname ) and mutante != original:
             os.system('adb install -r ' + basepath + mutante)
             os.system('timeout 1h adb shell monkey --throttle 200 -p '+package+' -s 1000 -v 250 --ignore-crashes --ignore-timeouts --ignore-security-exceptions > monkey.log')
+            sleep(1)
             captureScreen(mutante + '.png', basepath + 'Screenshots/')
             similar = analyze_results(basepath + 'Screenshots/', original + '.png', mutante + '.png')
             nmutante = re.search("\d+(?=\.apk)", mutante)
@@ -128,8 +130,6 @@ def main():
                 logging.info('Mutante: ' + mutante + ";Situacao: MORTO" + ";Operador: " + operador)
                 print 'Imagens diferentes' 
                 grupo[operador]['morto'] += 1
-                
-            break;
         
     # log dos operadores vivos e mortos
     total = 0
