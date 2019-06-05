@@ -107,6 +107,8 @@ def main():
     #variavel que guarda a quantidade de mortos e vivos por operador
     grupo = {}
 
+    total = 0
+    mortos = 0
     for mutante in os.listdir(basepath):
         if mutante.startswith( cname ) and mutante != original:
             os.system('adb uninstall ' + package)
@@ -132,14 +134,16 @@ def main():
                 logging.info('Mutante: ' + mutante + ";Situacao: MORTO" + ";Operador: " + operador)
                 print 'Imagens diferentes' 
                 grupo[operador]['morto'] += 1
+                mortos += 1
+
+            total += 1
         
     # log dos operadores vivos e mortos
-    total = 0
     for k in grupo:
         t = grupo[k]['vivo']+grupo[k]['morto']
-        total += t
-        logging.info('Operador: ' + k + ";VIVOS: " + str(grupo[k]['vivo']) + ";MORTOS: " + str(grupo[k]['morto']) + ";Total: " + str(t))
-    logging.info("TOTAL: " + str(total))
+        logging.info('Operador: ' + k + ";VIVOS: " + str(grupo[k]['vivo']) + ";MORTOS: " + str(grupo[k]['morto']) + ";Total: " + str(t) + ";Score: " + str((float(grupo[k]['morto'])/t)*100) + "%")
+    logging.info("TOTAL MUTANTES: " + str(total))
+    logging.info("SCORE: " + str((float(mortos)/total)*100) + "%")
 
 if __name__ == '__main__':
     main()
